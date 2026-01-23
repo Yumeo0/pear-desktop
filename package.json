@@ -37,7 +37,8 @@
     "release:linux": "pnpm clean && pnpm build && pnpm electron-builder --linux -p always -c.snap.publish=github",
     "release:mac": "pnpm clean && pnpm build && pnpm electron-builder --mac -p always",
     "release:win": "pnpm clean && pnpm build && pnpm electron-builder --win -p always",
-    "typecheck": "pnpm tsc -p tsconfig.json --noEmit"
+    "typecheck": "pnpm tsc -p tsconfig.json --noEmit",
+    "postinstall": "lefthook install"
   },
   "engines": {
     "node": ">=22",
@@ -167,6 +168,7 @@
     "eslint-plugin-prettier": "5.5.5",
     "eslint-plugin-solid": "0.14.5",
     "glob": "13.0.0",
+    "lefthook": "2.0.15",
     "node-gyp": "12.1.0",
     "ts-morph": "27.0.2",
     "typescript": "5.9.3",
