@@ -10,7 +10,7 @@ import { _ytAPI } from '..';
 import { canonicalize, romanize, simplifyUnicode } from '../utils';
 
 interface SyncedLineProps {
-  scroller: VirtualizerHandle;
+  scroller?: VirtualizerHandle;
   index: number;
 
   line: LineLyrics;

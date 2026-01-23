@@ -381,6 +381,10 @@
         }
       }
     },
+    "better-fullscreen": {
+      "description": "Enhances the fullscreen experience with lyrics, background effects, and more",
+      "name": "Better Fullscreen"
+    },
     "blur-nav-bar": {
       "description": "Makes navigation bar transparent and blurry",
       "name": "Blur Navigation Bar"
