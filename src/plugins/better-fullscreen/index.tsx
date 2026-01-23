@@ -1,36 +1,25 @@
 import { createPlugin } from '@/utils';
 import style from './style.css?inline';
-import { MediaType, type SongInfo } from '@/providers/song-info';
 import { t } from '@/i18n';
-import type { RendererContext } from '@/types/contexts';
 import { render } from 'solid-js/web';
 import { createEffect, createSignal, For } from 'solid-js';
-import { SyncedLine, PlainLyrics } from '../synced-lyrics/renderer/components';
-import { setConfig as setSyncedConfig } from '../synced-lyrics/renderer/renderer';
-
-// 1. Define the Config structure
-interface Config {
-  enabled: boolean;
-  perfectSync: boolean;
-  romanize: boolean;
-}
+import { SyncedLine, PlainLyrics } from '@/plugins/synced-lyrics/renderer/components';
+import { getSongInfo } from '@/providers/song-info-front';
+import { getLyricsProvider } from '@/plugins/lyrics-provider/renderer/utils';
 
 export default createPlugin({
   name: () => t('plugins.better-fullscreen.name'),
   description: () => t('plugins.better-fullscreen.description'),
   restartNeeded: true,
+  dependencies: ['lyrics-provider', 'synced-lyrics'],
   config: {
     enabled: true,
-    perfectSync: false,
-    romanize: false,
   },
   stylesheets: [style],
 
   renderer: {
-    async start(ctx: RendererContext<Config>) {
-      const config = await ctx.getConfig();
+    async start() {
       let isFullscreen = false;
-      let lyrics: any = null;
       let lastSrc = '';
 
       const ui = {
@@ -54,13 +43,24 @@ export default createPlugin({
         iconPlay: null as SVGSVGElement | null,
         iconPause: null as SVGSVGElement | null,
         settingsBtn: null as HTMLElement | null,
-        settingsModal: null as HTMLElement | null,
-        optSync: null as HTMLInputElement | null,
-        optRoman: null as HTMLInputElement | null,
       };
 
-      const FullscreenUI = () => (
-        <div ref={(el) => ui.container = el} id="bfs-container">
+      const [currentTimeSignal, setCurrentTimeSignal] = createSignal<number>(0);
+
+      const FullscreenUI = () => {
+        // Wrapper component to make status reactive
+        const ReactiveSyncedLine = (props: { line: any; index: number }) => {
+          const getStatus = () => {
+            const timeMs = currentTimeSignal() * 1000;
+            const line = props.line;
+            return timeMs >= line.timeInMs + line.duration ? 'previous' : timeMs >= line.timeInMs ? 'current' : 'upcoming';
+          };
+          
+          return <SyncedLine index={props.index} line={props.line} status={getStatus() as any} />;
+        };
+
+        return (
+          <div ref={(el) => ui.container = el} id="bfs-container">
           <div ref={(el) => ui.bgLayer = el} class="bfs-bg-layer">
             <div class="bfs-blob bfs-blob-1"></div>
             <div class="bfs-blob bfs-blob-2"></div>
@@ -86,23 +86,6 @@ export default createPlugin({
             </svg>
           </button>
 
-          <div ref={(el) => ui.settingsModal = el} id="bfs-settings-modal">
-            <div class="bfs-setting-item">
-              <span>Perfect Sync</span>
-              <label class="bfs-toggle">
-                <input ref={(el) => ui.optSync = el} type="checkbox" id="bfs-opt-sync" checked={config.perfectSync} />
-                <span class="bfs-slider"></span>
-              </label>
-            </div>
-            <div class="bfs-setting-item">
-              <span>Romanize (Google)</span>
-              <label class="bfs-toggle">
-                <input ref={(el) => ui.optRoman = el} type="checkbox" id="bfs-opt-roman" checked={config.romanize} />
-                <span class="bfs-slider"></span>
-              </label>
-            </div>
-          </div>
-
           <div class="bfs-content">
             <div class="bfs-lyrics-section">
               <div ref={(el) => ui.viz = el} class="bfs-visualizer-icon" id="bfs-viz">
@@ -112,7 +95,45 @@ export default createPlugin({
               </div>
               <div ref={(el) => ui.scroll = el} class="bfs-lyrics-scroll" id="bfs-scroll">
                 <div ref={(el) => ui.lines = el} class="bfs-lyrics-wrapper" id="bfs-lines">
-                  <LyricsComponent />
+                  {(() => {
+                    const provider = getLyricsProvider();
+                    if (!provider) {
+                      return <div class="bfs-empty">Loading lyrics provider...</div>;
+                    }
+                    
+                    const current = provider.currentLyrics();
+                    if (!current || current.state === 'fetching') {
+                      return <div class="bfs-empty">Loading...</div>;
+                    }
+                    if (current.state === 'error') {
+                      return <div class="bfs-empty">
+                        <span>Lyrics not available</span>
+                        <button class="bfs-refresh-btn" onClick={() => {
+                          // TODO: implement retry
+                        }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                          Retry Search
+                        </button>
+                      </div>;
+                    }
+                    if (current.data?.lines) {
+                      const lines = current.data.lines;
+                      return <For each={lines}>{(line, index) => {
+                        return <ReactiveSyncedLine line={line} index={index()} />;
+                      }}</For>;
+                    } else if (current.data?.lyrics) {
+                      return <PlainLyrics line={current.data.lyrics} />;
+                    }
+                    return <div class="bfs-empty">
+                      <span>Lyrics not available</span>
+                      <button class="bfs-refresh-btn" onClick={() => {
+                        // TODO: implement retry
+                      }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        Retry Search
+                      </button>
+                    </div>;
+                  })()}
                 </div>
               </div>
             </div>
@@ -159,70 +180,28 @@ export default createPlugin({
           <canvas ref={(el) => ui.canvas = el} id="bfs-canvas" width="50" height="50"></canvas>
         </div>
       );
+    };
 
       const div = document.createElement('div');
       render(() => <FullscreenUI />, div);
       document.body.appendChild(div);
 
-      const [lyricsSignal, setLyricsSignal] = createSignal<any>(null);
-      const [currentTimeSignal, setCurrentTimeSignal] = createSignal<number>(0);
-      setSyncedConfig({
-        enabled: true,
-        preciseTiming: false,
-        showTimeCodes: false,
-        defaultTextString: '',
-        showLyricsEvenIfInexact: false,
-        lineEffect: 'focus',
-        romanization: config.romanize,
-      });
-
-      const LyricsComponent = () => {
-        const lyrics = lyricsSignal();
-        if (!lyrics) {
-          return <div class="bfs-empty">Loading...</div>;
-        }
-        if (lyrics.lines) {
-          return <For each={lyrics.lines}>{(line, index) => {
-            const timeMs = currentTimeSignal() * 1000;
-            let status: 'upcoming' | 'current' | 'previous' = 'upcoming';
-            if (timeMs >= line.timeInMs) {
-              status = 'current';
-              for (let i = index() + 1; i < lyrics.lines.length; i++) {
-                if (timeMs >= lyrics.lines[i].timeInMs) {
-                  status = 'previous';
-                } else {
-                  break;
-                }
-              }
-            }
-            return <SyncedLine index={index()} line={line} status={status} />;
-          }}</For>;
-        } else if (lyrics.plain) {
-          return <PlainLyrics line={lyrics.plain} />;
-        }
-        return <div class="bfs-empty">
-          <span>Lyrics not available</span>
-          <button class="bfs-refresh-btn" onClick={() => {
-            const title = ui.title?.innerText;
-            const artist = ui.artist?.innerText;
-            const video = document.querySelector('video');
-            if(title && artist && video) {
-              setLyricsSignal(null);
-            }
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-            Retry Search
-          </button>
-        </div>;
-      };
+      // Initial fetch
+      const provider = getLyricsProvider();
+      if (provider) {
+        provider.fetchLyrics(getSongInfo());
+      }
 
       createEffect(() => {
-        const lyrics = lyricsSignal();
-        if (!lyrics?.lines) return;
+        const provider = getLyricsProvider();
+        if (!provider) return;
+        const lyrics = provider.currentLyrics();
+        if (!lyrics.data?.lines) return;
+        const lines = lyrics.data.lines;
         const timeMs = currentTimeSignal() * 1000;
         let activeIndex = -1;
-        for (let i = 0; i < lyrics.lines.length; i++) {
-          if (timeMs >= lyrics.lines[i].timeInMs) activeIndex = i;
+        for (let i = 0; i < lines.length; i++) {
+          if (timeMs >= lines[i].timeInMs) activeIndex = i;
           else break;
         }
         if (activeIndex !== -1) {
@@ -279,9 +258,6 @@ export default createPlugin({
         const currentSrc = video.src;
         if (currentSrc && currentSrc !== lastSrc) {
            lastSrc = currentSrc;
-           if (title && artist) {
-               setLyricsSignal(null);
-           }
         }
 
         if (isFullscreen) {
@@ -312,36 +288,25 @@ export default createPlugin({
         }
       };
 
-      document.getElementById('bfs-close')?.addEventListener('click', () => toggleFS(false));
-      window.addEventListener('keydown', e => {
-        if(e.key === 'F12') toggleFS(!isFullscreen);
-        if(e.key === 'Escape') toggleFS(false);
-      });
-
-      ui.settingsBtn?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        ui.settingsModal?.classList.toggle('active');
-      });
-      ui.container?.addEventListener('click', (e) => {
-        if(e.target !== ui.settingsBtn && !ui.settingsModal?.contains(e.target as Node)) {
-           ui.settingsModal?.classList.remove('active');
+      // Listen for fullscreen changes to keep overlay in sync
+      document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement && isFullscreen) {
+          // Fullscreen was exited (via Escape or other means), update our state
+          toggleFS(false);
         }
       });
 
-      ui.optSync?.addEventListener('change', (e) => {
-        config.perfectSync = (e.target as HTMLInputElement).checked;
-        ctx.setConfig({ perfectSync: config.perfectSync, romanize: config.romanize });
-      });
-
-      ui.optRoman?.addEventListener('change', async (e) => {
-        config.romanize = (e.target as HTMLInputElement).checked;
-        ctx.setConfig({ perfectSync: config.perfectSync, romanize: config.romanize });
-        setSyncedConfig(prev => prev ? { ...prev, romanization: config.romanize } : prev);
-        const title = ui.title?.innerText;
-        const artist = ui.artist?.innerText;
-        const video = document.querySelector('video');
-        if(title && artist && video) {
-           ui.lines!.innerHTML = '<div class="bfs-empty">Processing...</div>';
+      document.getElementById('bfs-close')?.addEventListener('click', () => toggleFS(false));
+      window.addEventListener('keydown', e => {
+        if(e.key === 'F12') {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleFS(!isFullscreen);
+        }
+        if(e.key === 'Escape' && isFullscreen) {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleFS(false);
         }
       });
 
