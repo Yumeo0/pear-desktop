@@ -311,7 +311,7 @@ function initTheme(win: BrowserWindow) {
   }
 
   win.webContents.once('did-finish-load', () => {
-    if (is.dev()) {
+    if (is.dev() && !isTesting()) {
       console.debug(LoggerPrefix, t('main.console.did-finish-load.dev-tools'));
       win.webContents.openDevTools();
     }
@@ -321,7 +321,13 @@ function initTheme(win: BrowserWindow) {
 async function createMainWindow() {
   const windowSize = config.get('window-size');
   const windowMaximized = config.get('window-maximized');
-  const windowPosition: Electron.Point = config.get('window-position');
+  let windowPosition: Electron.Point = config.get('window-position');
+  
+  // In test mode, ignore saved window position and use center of screen
+  if (isTesting()) {
+    windowPosition = { x: -1, y: -1 };
+  }
+  
   const useInlineMenu = await config.plugins.isEnabled('in-app-menu');
 
   const defaultTitleBarOverlayOptions: Electron.TitleBarOverlay = {
@@ -376,7 +382,7 @@ async function createMainWindow() {
 
   await loadAllMainPlugins(win);
 
-  if (windowPosition) {
+  if (windowPosition && !isTesting()) {
     const { x: windowX, y: windowY } = windowPosition;
     const winSize = win.getSize();
     const display = screen.getDisplayNearestPoint(windowPosition);
@@ -479,7 +485,7 @@ async function createMainWindow() {
   });
 
   win.once('ready-to-show', () => {
-    if (config.get('options.appVisible')) {
+    if (config.get('options.appVisible') || isTesting()) {
       win.show();
     }
   });

@@ -6,10 +6,11 @@ import { test, expect, _electron as electron } from '@playwright/test';
 process.env.NODE_ENV = 'test';
 
 const appPath = path.resolve(import.meta.dirname, '..');
+const electronPath = path.join(appPath, 'node_modules', '.bin', 'electron');
 
 test('Pear Desktop App - With default settings, app is launched and visible', async () => {
   const app = await electron.launch({
-    cwd: appPath,
+    executablePath: electronPath,
     args: [
       appPath,
       '--no-sandbox',

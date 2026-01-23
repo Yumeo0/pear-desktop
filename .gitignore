@@ -3,6 +3,7 @@ node_modules
 /pack
 .vscode/settings.json
 .idea
+test-results
 
 .pnp.*
 .yarn/*
