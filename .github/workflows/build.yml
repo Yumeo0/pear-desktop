@@ -55,6 +55,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
           pnpm release:mac
 
       - name: Build and release on Linux
