@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [ macos-latest, ubuntu-latest, windows-latest ]
+        os: [ macos-26, ubuntu-latest, windows-latest ]
 
     steps:
       - uses: actions/checkout@v5
@@ -55,7 +55,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
           pnpm release:mac
 
       - name: Build and release on Linux
