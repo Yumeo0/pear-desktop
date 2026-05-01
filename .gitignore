@@ -6,6 +6,7 @@ node_modules
 test-results
 
 .pnp.*
+.pnpm-store
 .yarn/*
 !.yarn/patches
 !.yarn/plugins

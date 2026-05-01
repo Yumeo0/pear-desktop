@@ -128,7 +128,7 @@ export const mainMenuTemplate = async (
 
         return aPluginLabel.localeCompare(bPluginLabel);
       })
-      .map((id) => {
+      .map(async (id) => {
         const predefinedTemplate = menuResult.find((it) => it[0] === id);
         if (predefinedTemplate) return predefinedTemplate[1];
 
@@ -283,6 +283,19 @@ export const mainMenuTemplate = async (
                   checked: config.get('options.likeButtons') === 'hide',
                   click() {
                     config.set('options.likeButtons', 'hide');
+                  },
+                },
+                {
+                  label: t(
+                    'main.menu.options.submenu.visual-tweaks.submenu.like-buttons.swap',
+                  ),
+                  type: 'checkbox',
+                  checked: config.get('options.swapLikeButtonsOrder'),
+                  click(item: MenuItem) {
+                    config.setMenuOption(
+                      'options.swapLikeButtonsOrder',
+                      item.checked,
+                    );
                   },
                 },
               ],

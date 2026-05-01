@@ -9,6 +9,10 @@ export type SyncedLyricsPluginConfig = {
   showLyricsEvenIfInexact: boolean;
   lineEffect: LineEffect;
   romanization: boolean;
+  convertChineseCharacter?:
+    | 'simplifiedToTraditional'
+    | 'traditionalToSimplified'
+    | 'disabled';
 };
 
 export type LineLyricsStatus = 'previous' | 'current' | 'upcoming';

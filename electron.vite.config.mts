@@ -1,7 +1,7 @@
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { defineConfig, defineViteConfig } from 'electron-vite';
+import { defineConfig } from 'electron-vite';
 import builtinModules from 'builtin-modules';
 
 import Inspect from 'vite-plugin-inspect';
@@ -23,26 +23,21 @@ const resolveAlias = {
 
 const isDev = process.env.NODE_ENV === 'development';
 
-export default defineConfig({
-  main: defineViteConfig({
-    experimental: {
-      enableNativePlugin: true,
-    },
+export default defineConfig(({ mode }) => {
+  const isDev = mode === 'development';
+
+  const mainConfig: UserConfig = {
     plugins: [
       pluginLoader('backend'),
       viteResolve({
         'virtual:i18n': i18nImporter(),
         'virtual:plugins': pluginVirtualModuleGenerator('main'),
       }),
-      ...(isDev ? [Inspect({
-        build: true,
-        outputDir: join(__dirname, '.vite-inspect/backend'),
-      })] : []),
     ],
     publicDir: 'assets',
     define: {
-      '__dirname': 'import.meta.dirname',
-      '__filename': 'import.meta.filename',
+      __dirname: 'import.meta.dirname',
+      __filename: 'import.meta.filename',
     },
     build: {
       lib: {
@@ -54,26 +49,22 @@ export default defineConfig({
         external: ['electron', 'custom-electron-prompt', ...builtinModules],
         input: './src/index.ts',
       },
-      ...(isDev ? { sourcemap: 'inline' } : { minify: true, cssMinify: true }),
+      minify: !isDev,
+      cssMinify: !isDev,
+      sourcemap: isDev ? 'inline' : undefined,
     },
     resolve: {
       alias: resolveAlias,
     },
-  }),
-  preload: defineViteConfig({
-    experimental: {
-      enableNativePlugin: true,
-    },
+  };
+
+  const preloadConfig: UserConfig = {
     plugins: [
       pluginLoader('preload'),
       viteResolve({
         'virtual:i18n': i18nImporter(),
         'virtual:plugins': pluginVirtualModuleGenerator('preload'),
       }),
-      ...(isDev ? [Inspect({
-        build: true,
-        outputDir: join(__dirname, '.vite-inspect/preload'),
-      })] : []),
     ],
     build: {
       lib: {
@@ -88,16 +79,16 @@ export default defineConfig({
         external: ['electron', 'custom-electron-prompt', ...builtinModules],
         input: './src/preload.ts',
       },
-      ...(isDev ? { sourcemap: 'inline' } : { minify: true, cssMinify: true }),
+      minify: !isDev,
+      cssMinify: !isDev,
+      sourcemap: isDev ? 'inline' : undefined,
     },
     resolve: {
       alias: resolveAlias,
     },
-  }),
-  renderer: defineViteConfig({
-    experimental: {
-      enableNativePlugin: !isDev, // Disable native plugin in development mode to avoid issues with HMR (bug in rolldown-vite)
-    },
+  };
+
+  const rendererConfig: UserConfig = {
     plugins: [
       pluginLoader('renderer'),
       viteResolve({
@@ -107,10 +98,6 @@ export default defineConfig({
       withFilter(solidPlugin(), {
         load: { id: [/\.(tsx|jsx)$/, '/@solid-refresh'] },
       }),
-      ...(isDev ? [Inspect({
-        build: true,
-        outputDir: join(__dirname, '.vite-inspect/renderer'),
-      })] : []),
     ],
     root: './src/',
     build: {
@@ -124,16 +111,44 @@ export default defineConfig({
         external: ['electron', ...builtinModules],
         input: './src/index.html',
       },
-      ...(isDev ? { sourcemap: 'inline' } : { minify: true, cssMinify: true }),
+      minify: !isDev,
+      cssMinify: !isDev,
+      sourcemap: isDev ? 'inline' : undefined,
     },
     resolve: {
       alias: resolveAlias,
     },
     server: {
       cors: {
-        origin:
-          'https://music.\u0079\u006f\u0075\u0074\u0075\u0062\u0065.com',
+        origin: 'https://music.\u0079\u006f\u0075\u0074\u0075\u0062\u0065.com',
       },
     },
-  }),
+  };
+
+  if (isDev) {
+    mainConfig.plugins?.push(
+      Inspect({
+        build: true,
+        outputDir: join(__dirname, '.vite-inspect/backend'),
+      }),
+    );
+    preloadConfig.plugins?.push(
+      Inspect({
+        build: true,
+        outputDir: join(__dirname, '.vite-inspect/preload'),
+      }),
+    );
+    rendererConfig.plugins?.push(
+      Inspect({
+        build: true,
+        outputDir: join(__dirname, '.vite-inspect/renderer'),
+      }),
+    );
+  }
+
+  return {
+    main: mainConfig,
+    preload: preloadConfig,
+    renderer: rendererConfig,
+  };
 });
