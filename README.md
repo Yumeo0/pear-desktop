@@ -147,11 +147,11 @@ Some predefined themes are available in https://github.com/kerichdev/themes-for-
 ```bash
 git clone https://github.com/pear-devs/pear-desktop
 cd pear-desktop
-pnpm install --frozen-lockfile
-pnpm dev
+bun install --frozen-lockfile
+bun dev
 ```
 
-Instead of installing pnpm on your system, you can also use [devcontainers](https://containers.dev/). You can use devcontainers either as a development environment in VS Code, or as a way to easily build the project without installing dependencies on your host system.
+Instead of installing bun on your system, you can also use [devcontainers](https://containers.dev/). You can use devcontainers either as a development environment in VS Code, or as a way to easily build the project without installing dependencies on your host system.
 
 Note that this has it's own limitations (for example, GUI doesn't work on, at least some, Linux hosts).
 
@@ -276,16 +276,16 @@ export default createPlugin({
 ## Build
 
 1. Clone the repo
-2. Follow [this guide](https://pnpm.io/installation) to install `pnpm`
-3. Run `pnpm install --frozen-lockfile` to install dependencies
-4. Run `pnpm build:OS`
+2. Follow [this guide](https://bun.io/installation) to install `bun`
+3. Run `bun install --frozen-lockfile` to install dependencies
+4. Run `bun build:OS`
 
-- `pnpm dist:win` - Windows
-- `pnpm dist:linux` - Linux (amd64)
-- `pnpm dist:linux:deb-arm64` - Linux (arm64 for Debian)
-- `pnpm dist:linux:rpm-arm64` - Linux (arm64 for Fedora)
-- `pnpm dist:mac` - macOS (amd64)
-- `pnpm dist:mac:arm64` - macOS (arm64)
+- `bun dist:win` - Windows
+- `bun dist:linux` - Linux (amd64)
+- `bun dist:linux:deb-arm64` - Linux (arm64 for Debian)
+- `bun dist:linux:rpm-arm64` - Linux (arm64 for Fedora)
+- `bun dist:mac` - macOS (amd64)
+- `bun dist:mac:arm64` - macOS (arm64)
 
 Builds the app for macOS, Linux, and Windows,
 using [electron-builder](https://github.com/electron-userland/electron-builder).
@@ -295,7 +295,7 @@ using [electron-builder](https://github.com/electron-userland/electron-builder).
 1. Clone the repo;
 2. Open the folder in VS Code;
 3. Reopen in container when prompted;
-4. Run `pnpm build` as above (choosing the desired target);
+4. Run `bun build` as above (choosing the desired target);
 5. Collect the built files from the `dist` folder.
 
 Since devcontainer uses a mount for the workspace, the built files will be available on the host system as well.
@@ -303,13 +303,13 @@ Since devcontainer uses a mount for the workspace, the built files will be avail
 ## Production Preview
 
 ```bash
-pnpm start
+bun start
 ```
 
 ## Tests
 
 ```bash
-pnpm test
+bun test
 ```
 
 Uses [Playwright](https://playwright.dev/) to test the app.

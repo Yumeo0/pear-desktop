@@ -24,18 +24,17 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
+      - name: Install bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 10
-          run_install: false
+          bun-version: latest
 
       - name: Setup NodeJS
         if: startsWith(matrix.os, 'macOS') != true
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: 'bun'
 
       - name: Setup NodeJS for macOS
         if: startsWith(matrix.os, 'macOS')
@@ -44,13 +43,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       # Only vite build without release if it is a fork, or it is a pull-request
       - name: Vite Build
         if: github.repository == 'Yumeo0/pear-desktop' && github.event_name == 'pull_request'
         run: |
-          pnpm build
+          bun build
 
       # Build and release if it's the main repository and is not pull-request
       - name: Build and release on Mac
@@ -58,7 +57,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pnpm release:mac
+          bun release:mac
 
       - name: Build and release on Linux
         if: startsWith(matrix.os, 'ubuntu') && (github.repository == 'Yumeo0/pear-desktop' && github.event_name != 'pull_request')
@@ -72,21 +71,21 @@ jobs:
           sudo flatpak install -y flathub org.freedesktop.Platform/x86_64/24.08
           sudo flatpak install -y flathub org.freedesktop.Sdk/x86_64/24.08
           sudo flatpak install -y flathub org.electronjs.Electron2.BaseApp/x86_64/24.08
-          pnpm release:linux
+          bun release:linux
 
       - name: Build and release on Windows
         if: startsWith(matrix.os, 'windows') && (github.repository == 'Yumeo0/pear-desktop' && github.event_name != 'pull_request')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pnpm release:win
+          bun release:win
 
       - name: Test
         uses: coactions/setup-xvfb@b6b4fcfb9f5a895edadc3bc76318fae0ac17c8b3
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
         with:
-          run: pnpm test:debug
+          run: bun test:debug
 
 
   release:
@@ -101,18 +100,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320
+      - name: Install bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 10
-          run_install: false
+          bun-version: latest
 
       - name: Setup NodeJS
         if: startsWith(matrix.os, 'macOS') != true
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
+          cache: 'bun'
 
       - name: Setup NodeJS for macOS
         if: startsWith(matrix.os, 'macOS')
@@ -121,7 +119,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Get version
         run: |
@@ -164,7 +162,7 @@ jobs:
       - name: Update changelog
         if: ${{ env.VERSION_HASH == '' }}
         run: |
-          pnpm changelog
+          bun changelog
 
       - name: Commit changelog
         if: ${{ env.VERSION_HASH == '' }}

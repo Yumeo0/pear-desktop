@@ -6,7 +6,7 @@ pre-commit:
   commands:
     lint:
       glob: "src/**/*.{ts,tsx,js,jsx}"
-      run: pnpm eslint {staged_files}
+      run: bun eslint {staged_files}
     format:
       glob: "src/**/*.{ts,tsx,js,jsx}"
-      run: pnpm eslint --fix {staged_files}
+      run: bun eslint --fix {staged_files}
