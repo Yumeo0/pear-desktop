@@ -4,9 +4,6 @@ on: [pull_request_target]
 
 permissions: {}
 
-env:
-  NODE_VERSION: "24.x"
-
 jobs:
   eslint:
     if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
@@ -23,12 +20,6 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-
-      - name: Setup NodeJS
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'bun'
 
       - name: Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
