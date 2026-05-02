@@ -23,6 +23,29 @@ import { APPLICATION_NAME } from '@/i18n';
 import type { RepeatMode, VolumeState } from '@/types/datahost-get-state';
 import type { QueueResponse } from '@/types/music-player-desktop-internal';
 
+const DEFAULT_LOOP_STATUS = MprisMeta.LOOP_STATUS_NONE;
+
+const toLoopStatus = (mode: RepeatMode | undefined): LoopStatus => {
+  switch (mode) {
+    case 'ONE':
+      return MprisMeta.LOOP_STATUS_TRACK;
+    case 'ALL':
+      return MprisMeta.LOOP_STATUS_PLAYLIST;
+    case 'NONE':
+    default:
+      return DEFAULT_LOOP_STATUS;
+  }
+};
+
+const safeLoopStatus = (player: YTPlayer): LoopStatus => {
+  try {
+    return player.loopStatus;
+  } catch {
+    player.setLoopStatus(DEFAULT_LOOP_STATUS);
+    return DEFAULT_LOOP_STATUS;
+  }
+};
+
 class YTPlayer extends MprisPlayer {
   /**
    * @type {number} The current position in microseconds
@@ -106,6 +129,7 @@ export function registerMPRIS(win: BrowserWindow) {
     };
 
     const player = setupMPRIS();
+    player.setLoopStatus(DEFAULT_LOOP_STATUS);
 
     const seekTo = (event: Position) => {
       if (
@@ -139,22 +163,8 @@ export function registerMPRIS(win: BrowserWindow) {
       player.seeked(secToMicro(t));
     });
 
-    ipcMain.on('peard:repeat-changed', (_, mode: RepeatMode) => {
-      switch (mode) {
-        case 'NONE': {
-          player.setLoopStatus(MprisMeta.LOOP_STATUS_NONE);
-          break;
-        }
-        case 'ONE': {
-          player.setLoopStatus(MprisMeta.LOOP_STATUS_TRACK);
-          break;
-        }
-        case 'ALL': {
-          player.setLoopStatus(MprisMeta.LOOP_STATUS_PLAYLIST);
-          // No default
-          break;
-        }
-      }
+    ipcMain.on('peard:repeat-changed', (_, mode: RepeatMode | undefined) => {
+      player.setLoopStatus(toLoopStatus(mode));
       requestQueueInformation();
     });
 
@@ -213,7 +223,7 @@ export function registerMPRIS(win: BrowserWindow) {
       let hasNext: boolean;
       if (queue.autoPlaying) {
         hasNext = true;
-      } else if (player.loopStatus === MprisMeta.LOOP_STATUS_PLAYLIST) {
+      } else if (safeLoopStatus(player) === MprisMeta.LOOP_STATUS_PLAYLIST) {
         hasNext = true;
       } else {
         // Example: currentPosition = 0, queue.items.length = 29 -> hasNext = true
@@ -230,8 +240,8 @@ export function registerMPRIS(win: BrowserWindow) {
         MprisMeta.LOOP_STATUS_PLAYLIST,
         MprisMeta.LOOP_STATUS_TRACK,
       ];
-      const currentIndex = switches.indexOf(player.loopStatus);
-      const targetIndex = switches.indexOf(status);
+      const currentIndex = switches.indexOf(safeLoopStatus(player));
+      const targetIndex = switches.indexOf(toLoopStatus(status));
 
       // Get a delta in the range [0,2]
       const delta = (targetIndex - currentIndex + 3) % 3;
