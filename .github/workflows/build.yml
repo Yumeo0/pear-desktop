@@ -33,7 +33,7 @@ jobs:
       - name: Vite Build
         if: github.repository == 'Yumeo0/pear-desktop' && github.event_name == 'pull_request'
         run: |
-          bun build
+          bun run build
 
       # Build and release if it's the main repository and is not pull-request
       - name: Build and release on Mac
@@ -41,7 +41,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bun release:mac
+          bun run release:mac
 
       - name: Build and release on Linux
         if: startsWith(matrix.os, 'ubuntu') && (github.repository == 'Yumeo0/pear-desktop' && github.event_name != 'pull_request')
@@ -55,21 +55,21 @@ jobs:
           sudo flatpak install -y flathub org.freedesktop.Platform/x86_64/24.08
           sudo flatpak install -y flathub org.freedesktop.Sdk/x86_64/24.08
           sudo flatpak install -y flathub org.electronjs.Electron2.BaseApp/x86_64/24.08
-          bun release:linux
+          bun run release:linux
 
       - name: Build and release on Windows
         if: startsWith(matrix.os, 'windows') && (github.repository == 'Yumeo0/pear-desktop' && github.event_name != 'pull_request')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bun release:win
+          bun run release:win
 
       - name: Test
         uses: coactions/setup-xvfb@b6b4fcfb9f5a895edadc3bc76318fae0ac17c8b3
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
         with:
-          run: bun test:debug
+          run: bun run test:debug
 
 
   release:
@@ -133,7 +133,7 @@ jobs:
       - name: Update changelog
         if: ${{ env.VERSION_HASH == '' }}
         run: |
-          bun changelog
+          bun run changelog
 
       - name: Commit changelog
         if: ${{ env.VERSION_HASH == '' }}

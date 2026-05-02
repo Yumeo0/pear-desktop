@@ -47,8 +47,8 @@ jobs:
       - name: Build on macOS
         if: startsWith(matrix.os, 'macOS')
         run: |
-          bun dist:mac
-          bun dist:mac:arm64
+          bun run dist:mac
+          bun run dist:mac:arm64
 
       - name: Install Linux dependencies
         if: startsWith(matrix.os, 'ubuntu')
@@ -64,14 +64,14 @@ jobs:
       - name: Build on Linux
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          bun dist:linux
-          bun dist:linux:deb-arm64
-          bun dist:linux:rpm-arm64
+          bun run dist:linux
+          bun run dist:linux:deb-arm64
+          bun run dist:linux:rpm-arm64
 
       - name: Build on Windows
         if: startsWith(matrix.os, 'windows')
         run: |
-          bun dist:win
+          bun run dist:win
 
       - name: Upload artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
