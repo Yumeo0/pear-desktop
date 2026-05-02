@@ -5,7 +5,10 @@ files:
   - dist
   - assets
   - license
-  - 'node_modules/**'
+  - '!node_modules'
+  - 'node_modules/custom-electron-prompt/**'
+  - 'node_modules/@ghostery/adblocker-electron-preload/**'
+  - 'node_modules/@ffmpeg.wasm/core-mt/**'
   - '!node_modules/**/*.map'
   - '!node_modules/**/*.ts'
 asarUnpack:
@@ -36,7 +39,7 @@ win:
 nsisWeb:
   runAfterFinish: false
 linux:
-  icon: assets/icon.png
+  icon: assets/generated/icons/linux/512x512.png
   category: AudioVideo
   desktop:
     entry:
@@ -80,6 +83,9 @@ flatpak:
   category: AudioVideo
   runtimeVersion: '24.08'
   baseVersion: '24.08'
+  files:
+    - - assets/generated/icons/linux/512x512.png
+      - /share/icons/hicolor/512x512/apps/com.github.th_ch.youtube_music.png
   finishArgs:
     - '--socket=wayland'
     - '--socket=x11'

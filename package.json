@@ -15,7 +15,7 @@
   },
   "scripts": {
     "test": "bun run build && bun playwright test",
-    "test:debug": "bun run build && bun run cross-env DEBUG=pw:*,-pw:test:protocol playwright test",
+    "test:debug": "bun run build && cross-env \"DEBUG=pw:*,-pw:test:protocol\" playwright test",
     "build": "bun electron-vite build",
     "vite:inspect": "bun run clean && electron-vite build --mode development && bun exec serve .vite-inspect",
     "start": "bun run cross-env NODE_ENV=development bun electron-vite preview",
@@ -26,8 +26,8 @@
     "clean": "bun del-cli dist && bun del-cli pack && bun del-cli .vite-inspect",
     "dist": "bun run clean && bun run build && bun electron-builder --win --mac --linux -p never",
     "dist:linux": "bun run clean && bun run build && bun electron-builder --linux AppImage flatpak deb rpm tar.gz -p never",
+    "dist:linux:flatpak": "bun run clean && bun run build && bun electron-builder --linux flatpak -p never",
     "dist:linux:deb-arm64": "bun run clean && bun run build && bun electron-builder --linux deb:arm64 -p never",
-    "dist:linux:flatpak": "bash ./scripts/dist-flatpak.sh",
     "dist:linux:rpm-arm64": "bun run clean && bun run build && bun electron-builder --linux rpm:arm64 -p never",
     "dist:mac": "bun run clean && bun run build && bun electron-builder --mac dmg:x64 -p never",
     "dist:mac:arm64": "bun run clean && bun run build && bun electron-builder --mac dmg:arm64 -p never",
